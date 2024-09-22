@@ -15,13 +15,12 @@
         <button id="reset-button" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mt-2">Reset</button>
     </div>
 
-    <script src="script.js"></script>
-</body>
-<script>
-    let steps = 0;
+    <script>
+        let steps = 0;
 let tracking = false;
 let lastY = 0;
-let threshold = 15; // Adjust threshold for sensitivity
+let lastTime = 0;
+let stepDetectionThreshold = 2; // Minimum change to consider as a step
 
 const stepDisplay = document.getElementById('step-display');
 const directionDisplay = document.getElementById('direction-display');
@@ -32,10 +31,12 @@ const resetButton = document.getElementById('reset-button');
 startButton.addEventListener('click', () => {
     if (!tracking) {
         tracking = true;
+        steps = 0; // Reset steps on start
         stepDisplay.textContent = `Steps: ${steps}`;
         directionDisplay.textContent = `Direction: Walking`;
-        
+
         window.addEventListener('devicemotion', handleMotion);
+        window.addEventListener('deviceorientation', handleOrientation);
     }
 });
 
@@ -46,27 +47,31 @@ resetButton.addEventListener('click', () => {
     stepDisplay.textContent = `Steps: ${steps}`;
     directionDisplay.textContent = `Direction: None`;
     window.removeEventListener('devicemotion', handleMotion);
+    window.removeEventListener('deviceorientation', handleOrientation);
 });
 
-// Handle motion events
+// Handle motion events for step counting
 function handleMotion(event) {
     const y = event.accelerationIncludingGravity.y;
 
     // Simple step detection logic
-    if (Math.abs(y - lastY) > threshold) {
-        steps++;
-        stepDisplay.textContent = `Steps: ${steps}`;
+    const currentTime = Date.now();
+    if (currentTime - lastTime > 300) { // Check every 300ms
+        if (y > lastY + stepDetectionThreshold) {
+            steps++;
+            stepDisplay.textContent = `Steps: ${steps}`;
+        }
+        lastY = y;
+        lastTime = currentTime;
     }
-    
-    lastY = y;
 }
 
-// Get device orientation
-window.addEventListener('deviceorientation', (event) => {
-    const alpha = event.alpha; // Represents the compass direction
+// Handle device orientation events for compass data
+function handleOrientation(event) {
+    const alpha = event.alpha; // Compass heading
     const direction = getDirection(alpha);
     directionDisplay.textContent = `Direction: ${direction}`;
-});
+}
 
 // Convert compass degrees to cardinal directions
 function getDirection(alpha) {
@@ -76,5 +81,7 @@ function getDirection(alpha) {
     if (alpha >= 225 && alpha < 315) return 'West';
 }
 
-</script>
+    </script>
+</body>
+    
 </html>
