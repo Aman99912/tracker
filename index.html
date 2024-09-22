@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-80">
+        <h1 class="text-2xl font-bold mb-4">Step Tracker</h1>
+        <div id="step-display" class="text-xl mb-2">Steps: 0</div>
+        <div id="direction-display" class="text-lg mb-4">Direction: None</div>
+        <button id="start-button" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Start Tracking</button>
+        <button id="reset-button" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mt-2">Reset</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+<script>
+    let steps = 0;
+let tracking = false;
+let lastY = 0;
+let threshold = 15; // Adjust threshold for sensitivity
+
+const stepDisplay = document.getElementById('step-display');
+const directionDisplay = document.getElementById('direction-display');
+const startButton = document.getElementById('start-button');
+const resetButton = document.getElementById('reset-button');
+
+// Start tracking the steps
+startButton.addEventListener('click', () => {
+    if (!tracking) {
+        tracking = true;
+        stepDisplay.textContent = `Steps: ${steps}`;
+        directionDisplay.textContent = `Direction: Walking`;
+        
+        window.addEventListener('devicemotion', handleMotion);
+    }
+});
+
+// Reset the steps
+resetButton.addEventListener('click', () => {
+    steps = 0;
+    tracking = false;
+    stepDisplay.textContent = `Steps: ${steps}`;
+    directionDisplay.textContent = `Direction: None`;
+    window.removeEventListener('devicemotion', handleMotion);
+});
+
+// Handle motion events
+function handleMotion(event) {
+    const y = event.accelerationIncludingGravity.y;
+
+    // Simple step detection logic
+    if (Math.abs(y - lastY) > threshold) {
+        steps++;
+        stepDisplay.textContent = `Steps: ${steps}`;
+    }
+    
+    lastY = y;
+}
+
+// Get device orientation
+window.addEventListener('deviceorientation', (event) => {
+    const alpha = event.alpha; // Represents the compass direction
+    const direction = getDirection(alpha);
+    directionDisplay.textContent = `Direction: ${direction}`;
+});
+
+// Convert compass degrees to cardinal directions
+function getDirection(alpha) {
+    if (alpha < 45 || alpha >= 315) return 'North';
+    if (alpha >= 45 && alpha < 135) return 'East';
+    if (alpha >= 135 && alpha < 225) return 'South';
+    if (alpha >= 225 && alpha < 315) return 'West';
+}
+
+</script>
+</html>
